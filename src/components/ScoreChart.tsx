@@ -29,7 +29,7 @@ export function ScoreChart({ distribution }: Props) {
           />
           <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
           <Tooltip
-            formatter={(value: number) => [`${value} responses`, "Count"]}
+            formatter={(value) => [`${value} responses`, "Count"]}
             labelFormatter={(label) => `Rating: ${label}/5`}
           />
           <Bar dataKey="count" radius={[4, 4, 0, 0]}>
