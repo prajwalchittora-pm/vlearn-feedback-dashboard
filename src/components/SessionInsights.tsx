@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FeedbackEntry } from "../types";
 import { analyzeSession } from "../utils/feedbackAnalyzer";
-import {
-  generateSessionInsight,
-  getApiKey,
-  type AIInsight,
-} from "../utils/geminiService";
+import { generateSessionInsight, type AIInsight } from "../utils/geminiService";
 
 interface Props {
   feedbacks: FeedbackEntry[];
@@ -17,7 +13,6 @@ export function SessionInsights({ feedbacks, sessionName }: Props) {
   const [aiInsight, setAiInsight] = useState<AIInsight | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasApiKey = !!getApiKey();
 
   const fetchAiInsight = async () => {
     setLoading(true);
@@ -33,18 +28,14 @@ export function SessionInsights({ feedbacks, sessionName }: Props) {
   };
 
   useEffect(() => {
-    if (hasApiKey) {
-      fetchAiInsight();
-    }
-  }, [sessionName, hasApiKey]);
+    fetchAiInsight();
+  }, [sessionName]);
 
   return (
     <div className="insights-section">
       <div className="insights-header">
         <h3>Session Summary</h3>
-        {hasApiKey && (
-          <span className="ai-badge">AI-powered</span>
-        )}
+        {aiInsight && <span className="ai-badge">AI-powered</span>}
       </div>
 
       {/* Sentiment bar — always shown from basic analysis */}
@@ -89,7 +80,7 @@ export function SessionInsights({ feedbacks, sessionName }: Props) {
         </span>
       </div>
 
-      {/* AI-generated insight */}
+      {/* AI loading state */}
       {loading && (
         <div className="ai-loading">
           <div className="spinner" />
@@ -97,13 +88,40 @@ export function SessionInsights({ feedbacks, sessionName }: Props) {
         </div>
       )}
 
-      {error && (
-        <div className="ai-error">
-          <span>{error}</span>
-          <button onClick={fetchAiInsight}>Retry</button>
-        </div>
+      {/* AI error — fall back to basic analysis */}
+      {error && !loading && (
+        <>
+          <p className="insights-summary">{basicInsight.summary}</p>
+          <div className="insights-columns">
+            {basicInsight.positiveComments.length > 0 && (
+              <div className="insight-col insight-positive">
+                <h4>What went well</h4>
+                <ul>
+                  {basicInsight.positiveComments.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(basicInsight.negativeComments.length > 0 ||
+              basicInsight.neutralComments.length > 0) && (
+              <div className="insight-col insight-negative">
+                <h4>What needs improvement</h4>
+                <ul>
+                  {basicInsight.negativeComments.map((c, i) => (
+                    <li key={`neg-${i}`}>{c}</li>
+                  ))}
+                  {basicInsight.neutralComments.map((c, i) => (
+                    <li key={`neu-${i}`} className="neutral-comment">{c}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
+      {/* AI-generated insight */}
       {aiInsight && !loading && (
         <div className="ai-insight-content">
           <p className="insights-summary">{aiInsight.overallSentiment}</p>
@@ -154,47 +172,6 @@ export function SessionInsights({ feedbacks, sessionName }: Props) {
             </div>
           )}
         </div>
-      )}
-
-      {/* Fallback to basic analysis when no API key */}
-      {!hasApiKey && !loading && (
-        <>
-          <p className="insights-summary">{basicInsight.summary}</p>
-          <div className="insights-columns">
-            {basicInsight.positiveComments.length > 0 && (
-              <div className="insight-col insight-positive">
-                <h4>What went well</h4>
-                <ul>
-                  {basicInsight.positiveComments.map((c, i) => (
-                    <li key={i}>{c}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {(basicInsight.negativeComments.length > 0 ||
-              basicInsight.neutralComments.length > 0) && (
-              <div className="insight-col insight-negative">
-                <h4>What needs improvement</h4>
-                <ul>
-                  {basicInsight.negativeComments.map((c, i) => (
-                    <li key={`neg-${i}`}>{c}</li>
-                  ))}
-                  {basicInsight.neutralComments.map((c, i) => (
-                    <li key={`neu-${i}`} className="neutral-comment">
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-          <div className="ai-prompt-banner">
-            <span>
-              Add an Anthropic API key to get AI-powered insights with sentiment analysis,
-              pain points, and action items.
-            </span>
-          </div>
-        </>
       )}
     </div>
   );

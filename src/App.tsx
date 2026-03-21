@@ -1,10 +1,9 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { FeedbackEntry, SessionSummary } from "./types";
 import { parseCSV, groupBySession } from "./utils/csvParser";
 import { CsvUploader } from "./components/CsvUploader";
 import { SessionList } from "./components/SessionList";
 import { SessionDetail } from "./components/SessionDetail";
-import { ApiKeyInput } from "./components/ApiKeyInput";
 import "./App.css";
 
 type View = "upload" | "list" | "detail";
@@ -15,8 +14,6 @@ function App() {
   const [selectedSession, setSelectedSession] = useState<SessionSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
-  const [, setKeyVersion] = useState(0);
-  const handleKeyChange = useCallback(() => setKeyVersion((v) => v + 1), []);
 
   const handleFileSelected = async (file: File) => {
     try {
@@ -72,12 +69,9 @@ function App() {
       )}
 
       {view !== "upload" && (
-        <div className="app-bottom">
-          <ApiKeyInput onKeyChange={handleKeyChange} />
-          <footer className="app-footer">
-            Loaded from: <strong>{fileName}</strong>
-          </footer>
-        </div>
+        <footer className="app-footer">
+          Loaded from: <strong>{fileName}</strong>
+        </footer>
       )}
     </div>
   );
