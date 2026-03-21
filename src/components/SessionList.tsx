@@ -6,9 +6,10 @@ interface Props {
   sessions: SessionSummary[];
   onSelectSession: (session: SessionSummary) => void;
   onReset: () => void;
+  onExecutiveSummary: () => void;
 }
 
-export function SessionList({ sessions, onSelectSession, onReset }: Props) {
+export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSummary }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = sessions.filter((s) =>
@@ -26,9 +27,19 @@ export function SessionList({ sessions, onSelectSession, onReset }: Props) {
       <div className="session-list-header">
         <div className="header-top">
           <h1>VLearn Feedback Dashboard</h1>
-          <button className="btn-secondary" onClick={onReset}>
-            Upload New CSV
-          </button>
+          <div className="header-actions">
+            <button className="btn-exec-summary" onClick={onExecutiveSummary}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+              Executive Summary
+            </button>
+            <button className="btn-secondary" onClick={onReset}>
+              Upload New CSV
+            </button>
+          </div>
         </div>
         <div className="overview-stats">
           <div className="stat-pill">
