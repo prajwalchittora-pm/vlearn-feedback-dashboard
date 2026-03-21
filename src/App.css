@@ -952,31 +952,108 @@ body {
   height: 32px;
 }
 
-/* ===== Executive Summary Button ===== */
-.header-actions {
+/* ===== Executive Summary Banner ===== */
+.exec-banner {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid #c4b5fd;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 60%, #6366f1 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow:
+    0 2px 12px rgba(79, 70, 229, 0.25),
+    0 0 20px rgba(124, 58, 237, 0.1);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.exec-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%,
+    transparent 100%
+  );
+  animation: shimmer 3s linear infinite;
+}
+
+.exec-banner:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 24px rgba(79, 70, 229, 0.35),
+    0 0 40px rgba(124, 58, 237, 0.15);
+}
+
+.exec-banner:hover .exec-banner-arrow {
+  transform: translateX(4px);
+}
+
+.exec-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 1;
+}
+
+.exec-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.exec-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exec-banner-title {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.btn-exec-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+.exec-banner-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.btn-exec-summary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+.exec-banner-desc {
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1.3;
+}
+
+.exec-banner-arrow {
+  z-index: 1;
+  flex-shrink: 0;
+  transition: transform 0.2s;
 }
 
 /* ===== Executive Summary Page ===== */
@@ -1430,9 +1507,8 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .header-actions {
-    flex-direction: column;
-    width: 100%;
+  .exec-banner-content {
+    gap: 10px;
   }
 }
 
