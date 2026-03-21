@@ -2,13 +2,13 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
-interface FeedbackItem {
-  sessionName: string;
-  learnerName: string;
-  email: string;
-  rating: number;
-  comment: string;
-  courseName: string;
+interface SessionDigest {
+  name: string;
+  course: string;
+  avg: number;
+  total: number;
+  distribution: number[]; // [1star, 2star, 3star, 4star, 5star]
+  comments: { learner: string; rating: number; text: string }[];
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -21,102 +21,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "API key not configured on server" });
   }
 
-  const { feedbacks, reportDate } = req.body;
+  const { sessions, reportDate, totalFeedbacks, overallAvg } = req.body as {
+    sessions: SessionDigest[];
+    reportDate: string;
+    totalFeedbacks: number;
+    overallAvg: number;
+  };
 
-  if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
-    return res.status(400).json({ error: "Missing feedbacks" });
+  if (!Array.isArray(sessions) || sessions.length === 0) {
+    return res.status(400).json({ error: "Missing session data" });
   }
 
-  // Build a condensed view of all feedback grouped by session
-  const sessionMap: Record<string, FeedbackItem[]> = {};
-  for (const f of feedbacks as FeedbackItem[]) {
-    if (!sessionMap[f.sessionName]) sessionMap[f.sessionName] = [];
-    sessionMap[f.sessionName].push(f);
-  }
-
-  const sessionSummaries = Object.entries(sessionMap)
-    .map(([name, fbs]) => {
-      const avg = fbs.reduce((s, f) => s + f.rating, 0) / fbs.length;
-      const comments = fbs
-        .filter((f) => f.comment && f.comment.length > 2)
-        .map((f) => `  - ${f.learnerName} (${f.rating}/5): "${f.comment}"`)
-        .join("\n");
-      return `Session: "${name}" [${fbs[0].courseName || "N/A"}]\nAvg: ${avg.toFixed(1)}/5 | Responses: ${fbs.length}\n${comments || "  (no comments)"}`;
+  // Build compact prompt from pre-aggregated data
+  const sessionLines = sessions
+    .map((s) => {
+      const dist = `[1★:${s.distribution[0]} 2★:${s.distribution[1]} 3★:${s.distribution[2]} 4★:${s.distribution[3]} 5★:${s.distribution[4]}]`;
+      const commentBlock =
+        s.comments.length > 0
+          ? s.comments
+              .map((c) => `  - ${c.learner} (${c.rating}/5): "${c.text}"`)
+              .join("\n")
+          : "  (no comments)";
+      return `SESSION: "${s.name}" [${s.course}]\nAvg: ${s.avg.toFixed(1)}/5 | N=${s.total} | ${dist}\n${commentBlock}`;
     })
     .join("\n\n");
 
-  const totalFeedbacks = feedbacks.length;
-  const overallAvg =
-    feedbacks.reduce((s: number, f: FeedbackItem) => s + f.rating, 0) /
-    totalFeedbacks;
-
-  const prompt = `You are a senior education operations analyst producing an executive summary for leadership at an ed-tech company (HeroVired). This is a weekly feedback report from live sessions on the LMS.
+  const prompt = `You are a senior education operations analyst producing an executive summary for leadership at HeroVired (ed-tech). This is a weekly feedback report from live sessions.
 
 Report Date: ${reportDate || "This week"}
-Total Sessions: ${Object.keys(sessionMap).length}
-Total Feedback Responses: ${totalFeedbacks}
-Overall Average Rating: ${overallAvg.toFixed(1)}/5
+Total Sessions: ${sessions.length}
+Total Responses: ${totalFeedbacks}
+Overall Avg: ${overallAvg.toFixed(1)}/5
 
-SESSION-WISE FEEDBACK:
-${sessionSummaries}
+${sessionLines}
 
-Analyze ALL the feedback above and return a JSON object (no markdown, no code fences, just raw JSON) with these fields:
-
+Return a JSON object (no markdown/code fences) with:
 {
-  "executiveSummary": "A 3-5 sentence high-level summary for leadership. Include overall sentiment, key highlights, and critical concerns. Be direct and actionable.",
-
-  "overallSentiment": "positive" OR "mixed" OR "negative",
-
-  "topHighlights": ["highlight 1", "highlight 2", ...] (3-5 standout positive observations across all sessions),
-
-  "criticalEscalations": [
-    {
-      "session": "session name",
-      "issue": "brief description of the critical issue",
-      "learnerQuote": "exact quote from the learner if available",
-      "severity": "high" OR "critical"
-    }
-  ] (issues that need IMMEDIATE leadership attention — very negative feedback, serious complaints, operational failures. Only include genuinely critical items, not mild concerns.),
-
-  "issueBuckets": [
-    {
-      "category": "category name (e.g. Faculty/Teaching, Technical/Platform, Operations/Management, Content/Curriculum, Pacing/Time, Communication)",
-      "count": number of feedback entries that fall in this bucket,
-      "sessions": ["session names affected"],
-      "summary": "1-2 sentence summary of issues in this bucket"
-    }
-  ] (categorize ALL negative and neutral feedback into buckets. Be specific about what category each issue belongs to.),
-
-  "standoutPositiveFeedback": [
-    {
-      "session": "session name",
-      "learner": "learner name",
-      "quote": "the exact positive quote",
-      "whyNotable": "brief reason this stands out"
-    }
-  ] (2-4 particularly notable positive comments that leadership would want to see — heartfelt praise, specific instructor appreciation, etc.),
-
-  "sessionsNeedingAttention": [
-    {
-      "session": "session name",
-      "avgRating": number,
-      "reason": "brief reason this session needs attention"
-    }
-  ] (sessions with low ratings or concerning feedback patterns),
-
-  "sessionsExcelling": [
-    {
-      "session": "session name",
-      "avgRating": number,
-      "reason": "brief reason this session excelled"
-    }
-  ] (top performing sessions),
-
-  "actionItems": ["action 1", "action 2", ...] (3-5 concrete, prioritized recommendations for the team)
+  "executiveSummary": "3-5 sentence executive summary for leadership. Be direct, actionable, honest.",
+  "overallSentiment": "positive"|"mixed"|"negative",
+  "topHighlights": ["3-5 standout positive observations"],
+  "criticalEscalations": [{"session":"name","issue":"description","learnerQuote":"exact quote if available","severity":"high"|"critical"}] (ONLY genuinely critical items),
+  "issueBuckets": [{"category":"e.g. Faculty/Teaching, Technical/Platform, Operations/Management, Content/Curriculum, Pacing/Time, Communication","count":number,"sessions":["affected sessions"],"summary":"1-2 sentences"}],
+  "standoutPositiveFeedback": [{"session":"name","learner":"name","quote":"exact quote","whyNotable":"reason"}] (2-4 notable quotes),
+  "sessionsNeedingAttention": [{"session":"name","avgRating":number,"reason":"brief"}],
+  "sessionsExcelling": [{"session":"name","avgRating":number,"reason":"brief"}],
+  "actionItems": ["3-5 prioritized recommendations"]
 }
 
-Be honest and direct. Do not sugarcoat issues. Leadership needs to know the real picture.
-Return ONLY the JSON object, nothing else.`;
+Be honest. Do not sugarcoat. Return ONLY JSON.`;
 
   try {
     const response = await fetch(ANTHROPIC_URL, {
@@ -145,12 +97,7 @@ Return ONLY the JSON object, nothing else.`;
 
     const data = await response.json();
     const text = data?.content?.[0]?.text || "";
-
-    const cleaned = text
-      .replace(/```json\s*/g, "")
-      .replace(/```\s*/g, "")
-      .trim();
-
+    const cleaned = text.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
     const parsed = JSON.parse(cleaned);
     return res.status(200).json(parsed);
   } catch (err) {

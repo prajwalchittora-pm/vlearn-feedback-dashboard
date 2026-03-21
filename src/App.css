@@ -590,13 +590,60 @@ body {
   border: 1px solid #ddd6fe;
 }
 
+/* Session-level AI loading — prominent shimmer */
 .ai-loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 20px;
-  color: var(--text-light);
+  gap: 14px;
+  padding: 32px 20px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 50%, #f0fdf4 100%);
+  border: 1px solid #ddd6fe;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.ai-loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(124, 58, 237, 0.06) 25%,
+    rgba(124, 58, 237, 0.12) 50%,
+    rgba(124, 58, 237, 0.06) 75%,
+    transparent 100%
+  );
+  animation: shimmer 2s linear infinite;
+}
+
+.ai-loading .spinner {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+
+.ai-loading span {
   font-size: 14px;
+  font-weight: 500;
+  color: #7c3aed;
+  z-index: 1;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(50%); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(124, 58, 237, 0.08); }
+  50% { box-shadow: 0 0 30px rgba(124, 58, 237, 0.18), 0 0 60px rgba(124, 58, 237, 0.06); }
 }
 
 .spinner {
@@ -999,13 +1046,14 @@ body {
   padding: 24px;
 }
 
-.exec-card:first-of-type {
+.exec-card-glow {
   position: relative;
-  background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 50%, #f0fdf4 100%);
-  border: 1px solid #ddd6fe;
+  background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 50%, #f0fdf4 100%) !important;
+  border: 1px solid #ddd6fe !important;
   box-shadow:
-    0 0 20px rgba(124, 58, 237, 0.08),
-    0 0 60px rgba(79, 70, 229, 0.04);
+    0 0 20px rgba(124, 58, 237, 0.1),
+    0 0 60px rgba(79, 70, 229, 0.06) !important;
+  animation: pulseGlow 3s ease-in-out infinite;
 }
 
 .exec-summary-text {
@@ -1386,6 +1434,111 @@ body {
     flex-direction: column;
     width: 100%;
   }
+}
+
+/* ===== Executive Summary Progress ===== */
+.exec-progress {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.exec-progress-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 60px;
+  background: linear-gradient(135deg, #faf5ff 0%, #f0f9ff 50%, #f5f3ff 100%);
+  border: 1px solid #ddd6fe;
+  border-radius: 16px;
+  box-shadow:
+    0 0 30px rgba(124, 58, 237, 0.1),
+    0 0 80px rgba(79, 70, 229, 0.05);
+  max-width: 480px;
+  width: 100%;
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.exec-progress-icon {
+  color: #7c3aed;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.exec-progress-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0;
+}
+
+.exec-progress-subtitle {
+  font-size: 13px;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.exec-progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background: #e9d5ff;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.exec-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #4f46e5);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.exec-progress-step {
+  font-size: 14px;
+  font-weight: 500;
+  color: #7c3aed;
+  margin: 0;
+  min-height: 20px;
+  transition: opacity 0.3s;
+}
+
+.exec-progress-steps {
+  display: flex;
+  gap: 8px;
+}
+
+.exec-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e9d5ff;
+  transition: all 0.3s;
+}
+
+.exec-step-dot.done {
+  background: #7c3aed;
+}
+
+.exec-step-dot.active {
+  background: #7c3aed;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+  animation: dotPulse 1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+}
+
+.exec-progress-time {
+  font-size: 12px;
+  color: var(--text-light);
+  margin: 0;
 }
 
 /* ===== Empty State ===== */
