@@ -54,6 +54,12 @@ const HEADER_MAP: Record<string, string> = {
   "program name": "courseName",
 };
 
+function decodeHtmlEntities(text: string): string {
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 function normalizeHeader(header: string): string | null {
   const normalized = header.trim().toLowerCase();
   return HEADER_MAP[normalized] || null;
@@ -108,7 +114,7 @@ export function parseCSV(file: File): Promise<FeedbackEntry[]> {
               learnerName: learnerName || "Unknown",
               email: values["email"] || "",
               rating: ratingVal,
-              comment: values["comment"] || "",
+              comment: decodeHtmlEntities(values["comment"] || ""),
               date: values["date"] || "",
               courseName: values["courseName"] || "",
             };
