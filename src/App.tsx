@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FeedbackEntry, SessionSummary } from "./types";
 import { parseCSV, groupBySession } from "./utils/csvParser";
 import { CsvUploader } from "./components/CsvUploader";
@@ -6,14 +6,37 @@ import { SessionList } from "./components/SessionList";
 import { SessionDetail } from "./components/SessionDetail";
 import "./App.css";
 
-type View = "upload" | "list" | "detail";
+type View = "loading" | "upload" | "list" | "detail";
 
 function App() {
-  const [view, setView] = useState<View>("upload");
+  const [view, setView] = useState<View>("loading");
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [selectedSession, setSelectedSession] = useState<SessionSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
+
+  // Auto-load the bundled feedback report on startup
+  useEffect(() => {
+    async function loadDefault() {
+      try {
+        const response = await fetch("/default-feedback.csv");
+        if (!response.ok) throw new Error("No default data found");
+        const blob = await response.blob();
+        const file = new File([blob], "feedback_report_21032026.csv", {
+          type: "text/csv",
+        });
+        const entries: FeedbackEntry[] = await parseCSV(file);
+        const grouped = groupBySession(entries);
+        setSessions(grouped);
+        setFileName("feedback_report_21032026.csv");
+        setView("list");
+      } catch {
+        // No default data — show upload screen
+        setView("upload");
+      }
+    }
+    loadDefault();
+  }, []);
 
   const handleFileSelected = async (file: File) => {
     try {
@@ -44,6 +67,17 @@ function App() {
     setFileName("");
     setView("upload");
   };
+
+  if (view === "loading") {
+    return (
+      <div className="app">
+        <div className="loading-screen">
+          <div className="spinner" />
+          <p>Loading feedback data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
