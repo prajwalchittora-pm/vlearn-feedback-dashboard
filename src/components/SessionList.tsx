@@ -7,19 +7,25 @@ interface Props {
   onSelectSession: (session: SessionSummary) => void;
   onReset: () => void;
   onExecutiveSummary: () => void;
+  dateFilter: string;
+  uniqueDates: string[];
+  onDateFilterChange: (date: string) => void;
+  formatDateLabel: (date: string) => string;
 }
 
-export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSummary }: Props) {
+export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSummary, dateFilter, uniqueDates, onDateFilterChange, formatDateLabel }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = sessions.filter((s) =>
     s.sessionName.toLowerCase().includes(search.toLowerCase())
   );
 
+  const sessionsWithFeedback = sessions.filter((s) => s.totalResponses > 0);
+  const sessionsAwaitingFeedback = sessions.length - sessionsWithFeedback.length;
   const totalFeedbacks = sessions.reduce((sum, s) => sum + s.totalResponses, 0);
   const overallAvg =
-    sessions.length > 0
-      ? sessions.reduce((sum, s) => sum + s.averageRating, 0) / sessions.length
+    sessionsWithFeedback.length > 0
+      ? sessionsWithFeedback.reduce((sum, s) => sum + s.averageRating, 0) / sessionsWithFeedback.length
       : 0;
 
   return (
@@ -44,7 +50,35 @@ export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSum
             <span className="stat-value">{overallAvg.toFixed(1)}</span>
             <span className="stat-label">Avg Rating</span>
           </div>
+          {sessionsAwaitingFeedback > 0 && (
+            <div className="stat-pill stat-pill-awaiting">
+              <span className="stat-value">{sessionsAwaitingFeedback}</span>
+              <span className="stat-label">Awaiting Feedback</span>
+            </div>
+          )}
         </div>
+        {uniqueDates.length > 1 && (
+          <div className="date-filter">
+            <span className="date-filter-label">Filter by date:</span>
+            <div className="date-filter-buttons">
+              <button
+                className={`date-filter-btn ${dateFilter === "all" ? "active" : ""}`}
+                onClick={() => onDateFilterChange("all")}
+              >
+                All
+              </button>
+              {uniqueDates.map((date) => (
+                <button
+                  key={date}
+                  className={`date-filter-btn ${dateFilter === date ? "active" : ""}`}
+                  onClick={() => onDateFilterChange(date)}
+                >
+                  {formatDateLabel(date)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <button className="exec-banner" onClick={onExecutiveSummary}>
           <div className="exec-banner-content">
             <div className="exec-banner-icon">

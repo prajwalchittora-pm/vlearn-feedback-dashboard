@@ -130,28 +130,53 @@ export function parseCSV(file: File): Promise<FeedbackEntry[]> {
   });
 }
 
+function isValidFeedback(entry: FeedbackEntry): boolean {
+  return entry.learnerName !== "Unknown" || entry.rating > 0 || !!entry.comment;
+}
+
 export function groupBySession(entries: FeedbackEntry[]): SessionSummary[] {
-  const groups: Record<string, FeedbackEntry[]> = {};
+  const groups: Record<string, { feedbacks: FeedbackEntry[]; date: string; courseName: string }> = {};
 
   for (const entry of entries) {
     if (!groups[entry.sessionName]) {
-      groups[entry.sessionName] = [];
+      groups[entry.sessionName] = { feedbacks: [], date: entry.date, courseName: entry.courseName };
     }
-    groups[entry.sessionName].push(entry);
+    if (isValidFeedback(entry)) {
+      groups[entry.sessionName].feedbacks.push(entry);
+    } else {
+      // Preserve date/course from placeholder rows
+      if (!groups[entry.sessionName].date && entry.date) {
+        groups[entry.sessionName].date = entry.date;
+      }
+      if (!groups[entry.sessionName].courseName && entry.courseName) {
+        groups[entry.sessionName].courseName = entry.courseName;
+      }
+    }
   }
 
-  return Object.entries(groups).map(([sessionName, feedbacks]) => {
+  return Object.entries(groups).map(([sessionName, { feedbacks, date, courseName }]) => {
     const totalRating = feedbacks.reduce((sum, f) => sum + f.rating, 0);
     const scoreDistribution = [1, 2, 3, 4, 5].map((score) => ({
       score,
       count: feedbacks.filter((f) => Math.round(f.rating) === score).length,
     }));
 
+    // For sessions with no feedback, create a placeholder entry to carry date/course info
+    const displayFeedbacks = feedbacks.length > 0 ? feedbacks : [{
+      sessionName,
+      learnerName: "",
+      email: "",
+      rating: 0,
+      comment: "",
+      date,
+      courseName,
+    } as FeedbackEntry];
+
     return {
       sessionName,
-      averageRating: totalRating / feedbacks.length,
+      averageRating: feedbacks.length > 0 ? totalRating / feedbacks.length : 0,
       totalResponses: feedbacks.length,
-      feedbacks,
+      feedbacks: displayFeedbacks,
       scoreDistribution,
     };
   });
