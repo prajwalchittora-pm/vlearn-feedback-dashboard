@@ -5,9 +5,10 @@ import { CsvUploader } from "./components/CsvUploader";
 import { SessionList } from "./components/SessionList";
 import { SessionDetail } from "./components/SessionDetail";
 import { ExecutiveSummary } from "./components/ExecutiveSummary";
+import { WeeklyComparison } from "./components/WeeklyComparison";
 import "./App.css";
 
-type View = "loading" | "upload" | "list" | "detail" | "executive";
+type View = "loading" | "upload" | "list" | "detail" | "executive" | "weekly";
 
 function formatDateLabel(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -146,6 +147,7 @@ function App() {
           onSelectSession={handleSelectSession}
           onReset={handleReset}
           onExecutiveSummary={() => setView("executive")}
+          onWeeklyComparison={() => setView("weekly")}
           dateFilter={dateFilter}
           uniqueDates={uniqueDates}
           onDateFilterChange={setDateFilter}
@@ -162,6 +164,14 @@ function App() {
           feedbacks={filteredFeedbacks}
           reportDate={reportDate}
           onBack={() => setView("list")}
+        />
+      )}
+
+      {view === "weekly" && (
+        <WeeklyComparison
+          feedbacks={allFeedbacks}
+          onBack={() => setView("list")}
+          formatDateLabel={formatDateLabel}
         />
       )}
 

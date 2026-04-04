@@ -7,13 +7,14 @@ interface Props {
   onSelectSession: (session: SessionSummary) => void;
   onReset: () => void;
   onExecutiveSummary: () => void;
+  onWeeklyComparison: () => void;
   dateFilter: string;
   uniqueDates: string[];
   onDateFilterChange: (date: string) => void;
   formatDateLabel: (date: string) => string;
 }
 
-export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSummary, dateFilter, uniqueDates, onDateFilterChange, formatDateLabel }: Props) {
+export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSummary, onWeeklyComparison, dateFilter, uniqueDates, onDateFilterChange, formatDateLabel }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = sessions.filter((s) =>
@@ -33,9 +34,21 @@ export function SessionList({ sessions, onSelectSession, onReset, onExecutiveSum
       <div className="session-list-header">
         <div className="header-top">
           <h1>VLearn Feedback Dashboard</h1>
-          <button className="btn-secondary" onClick={onReset}>
-            Upload New CSV
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            {uniqueDates.length > 1 && (
+              <button className="btn-comparison" onClick={onWeeklyComparison}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Week Comparison
+              </button>
+            )}
+            <button className="btn-secondary" onClick={onReset}>
+              Upload New CSV
+            </button>
+          </div>
         </div>
         <div className="overview-stats">
           <div className="stat-pill">
