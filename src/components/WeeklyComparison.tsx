@@ -35,7 +35,7 @@ function groupDatesIntoWeeks(dates: string[]): string[][] {
   return weeks;
 }
 
-function computeWeekStats(feedbacks: FeedbackEntry[], dates: string[], weekNum: number, formatDateLabel: (d: string) => string): WeekStats {
+function computeWeekStats(feedbacks: FeedbackEntry[], dates: string[], _weekNum: number, formatDateLabel: (d: string) => string): WeekStats {
   const entries = feedbacks.filter((f) => dates.includes(f.date) && f.rating > 0);
   const allEntries = feedbacks.filter((f) => dates.includes(f.date));
 
